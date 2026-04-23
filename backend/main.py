@@ -17,7 +17,7 @@ app = FastAPI()
 # Enable CORS for frontend to backend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","https://website-test-r8i6.vercel.app/"
+    allow_origins=["http://localhost:3000","https://website-test-r8i6.vercel.app"
 ],  # Next.js dev server
     allow_credentials=True,
     allow_methods=["*"],
