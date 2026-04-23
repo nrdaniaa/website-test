@@ -20,25 +20,30 @@ import { useRouter } from "next/navigation"
 
 
 export default function dashboard() {
-    const [message, setMessage] = useState("");
-    const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-      async function fetchMessage(){
+  useEffect(() => {
+    const fetchMessage = async () => {
+      try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/message`);
         const data = await res.json();
         setMessage(data.message);
+      } catch (err) {
+        console.error("Fetch error:", err);
       }
-      fetchMessage();
-    })
+    };
 
-  
-   
+    fetchMessage();
+  }, []);
+
+
+
   return (
 
-    
+
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
@@ -60,11 +65,11 @@ export default function dashboard() {
           </div>
         </header>
         <div className="flex p-4 justify-center">
-            <img src="g7logo.png" alt="G7 Aerospace Logo" className="h-16 w-auto" />
+          <img src="g7logo.png" alt="G7 Aerospace Logo" className="h-16 w-auto" />
         </div>
         <div>
-        <h1 className="mt-4 text-center text-2xl font-bold">Welcome to the G7 Aerospace Dashboard</h1>
-        <h1>{JSON.stringify(message)}</h1>
+          <h1 className="mt-4 text-center text-2xl font-bold">Welcome to the G7 Aerospace Dashboard</h1>
+          <h1>{message}</h1>
         </div>
       </SidebarInset>
     </SidebarProvider>
