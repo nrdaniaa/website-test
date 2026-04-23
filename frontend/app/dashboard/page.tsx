@@ -27,7 +27,7 @@ export default function dashboard() {
 
     useEffect(() => {
       async function fetchMessage(){
-        const res = await fetch("http://localhost:8000/api/message");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/message`);
         const data = await res.json();
         setMessage(data.message);
       }

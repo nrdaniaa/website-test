@@ -63,7 +63,7 @@ export function InputFile() {
             const formData = new FormData()
             formData.append("file", file)
 
-            const response = await fetch("http://localhost:8000/api/upload", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
                 method: "POST",
                 body: formData,
             })
@@ -144,7 +144,7 @@ export function ImageGallery() {
     const fetchImages = async () => {
         try {
             setLoading(true)
-            const response = await fetch("http://localhost:8000/api/images")
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/images`)
             const data = await response.json()
             setImages(data.images || [])
         } catch (error) {
@@ -185,8 +185,7 @@ export function ImageGallery() {
                             </div>
 
                             <div className="flex gap-4 items-center">
-                                <img
-                                    src={`http://localhost:8000${image.url}`}
+                            <img src={`${process.env.NEXT_PUBLIC_API_URL}${image.url}`}
                                     alt={`Image ${image.id}`}
                                     className="w-16 h-16 object-cover rounded flex-none"
                                 />

@@ -17,7 +17,8 @@ app = FastAPI()
 # Enable CORS for frontend to backend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Next.js dev server
+    allow_origins=["http://localhost:3000","https://website-test-r8i6.vercel.app/"
+],  # Next.js dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -91,7 +92,8 @@ async def upload_image(file: UploadFile = File(...)):
         )
         
         # Generate AI description in the background
-        description = await describe_image_with_ai(file_path)
+        # description = await describe_image_with_ai(file_path)
+        description = "No description available"        
         
         # Update record with description if available
         if description:
