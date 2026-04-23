@@ -25,6 +25,9 @@ app.add_middleware(
 
 db = Prisma()
 
+@app.get("/")
+def root():
+    return {"message": "API is running"}
 
 class ImageDescription(BaseModel):
     description: str
@@ -152,7 +155,7 @@ async def startup():
         print("DB connected")
     except Exception as e:
         print("DB connection failed:", e)
-        
+
 @app.on_event("shutdown")
 async def shutdown():
     await db.disconnect()
