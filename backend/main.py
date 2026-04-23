@@ -147,8 +147,12 @@ async def get_image(image_id: int):
 
 @app.on_event("startup")
 async def startup():
-    await db.connect()
-
+    try:
+        await db.connect()
+        print("DB connected")
+    except Exception as e:
+        print("DB connection failed:", e)
+        
 @app.on_event("shutdown")
 async def shutdown():
     await db.disconnect()
