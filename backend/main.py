@@ -10,6 +10,8 @@ from pydantic import BaseModel
 import base64
 import httpx
 from typing import Optional
+from fastapi.staticfiles import StaticFiles
+
 
 
 app = FastAPI()
@@ -25,6 +27,8 @@ app.add_middleware(
 )
 
 db = Prisma()
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/")
 def root():
@@ -108,11 +112,12 @@ async def upload_image(file: UploadFile = File(...)):
                 print(f"Failed to update description for image {image_record.id}: {db_error}")
         
         return {
-            "id": image_record.id,
-            "filename": unique_filename,
-            "url": f"/api/image/{image_record.id}",
-            "description": description
-        }
+              "id": image_record.id,
+                "filename": unique_filename,
+                "url": f"/uploads/{unique_filename}",
+                "description": description
+            }
+        
     except Exception as e:
         return {"error": str(e)}
 
