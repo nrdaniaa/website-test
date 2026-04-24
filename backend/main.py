@@ -11,9 +11,7 @@ import base64
 import httpx
 from typing import Optional
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine, text
 
-engine = create_engine(os.getenv("DATABASE_URL"))
 
 
 app = FastAPI()
@@ -86,54 +84,44 @@ async def upload_image(file: UploadFile = File(...)):
         with open(file_path, "wb") as buffer:
             buffer.write(await file.read())
 
-        # SAVE TO DB (SQLAlchemy raw query)
-        with engine.begin() as conn:
-            result = conn.execute(
-                text("""
-                    INSERT INTO image (image, description)
-                    VALUES (:image, :description)
-                    RETURNING id
-                """),
-                {"image": unique_filename, "description": "No description"}
-            )
-            image_id = result.fetchone()[0]
+        # SAVE USING PRISMA ONLY
+        image_record = await db.image.create(
+            data={
+                "image": unique_filename,
+                "description": "No description"
+            }
+        )
 
         return {
-            "id": image_id,
+            "id": image_record.id,
             "filename": unique_filename,
             "url": f"/uploads/{unique_filename}"
         }
 
     except Exception as e:
         return {"error": str(e)}
-    
 
 @app.get("/api/images")
 async def get_all_images():
     try:
-        with engine.begin() as conn:
-            result = conn.execute(text("""
-                SELECT id, image, description, created_at
-                FROM image
-                ORDER BY id DESC
-            """))
-            rows = result.fetchall()
+        images = await db.image.find_many(
+            order={"id": "desc"}
+        )
 
-        images = []
-        for row in rows:
-            images.append({
-                "id": row[0],
-                "url": f"/uploads/{row[1]}",
-                "description": row[2],
-                "createdAt": row[3]
-            })
-
-        return {"images": images}
+        return {
+            "images": [
+                {
+                    "id": img.id,
+                    "url": f"/uploads/{img.image}",
+                    "description": img.description,
+                    "createdAt": img.createdAt
+                }
+                for img in images
+            ]
+        }
 
     except Exception as e:
-        print("API ERROR:", e)
         return {"error": str(e)}
-    
     
 @app.get("/uploads/{filename}")
 async def get_image_file(filename: str):
