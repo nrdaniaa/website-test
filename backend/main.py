@@ -11,7 +11,9 @@ import base64
 import httpx
 from typing import Optional
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import create_engine, text
 
+engine = create_engine(os.getenv("DATABASE_URL"))
 
 
 app = FastAPI()
@@ -76,88 +78,72 @@ def get_message():
 
 @app.post("/api/upload")
 async def upload_image(file: UploadFile = File(...)):
-    """Upload an image, save to database, and generate AI description"""
     try:
-        # Generate unique filename
         file_extension = Path(file.filename).suffix
         unique_filename = f"{uuid.uuid4()}{file_extension}"
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
-        
-        # Save file to disk
+
         with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
-        
-        # Save to database (initially without description)
-        image_record = await db.image.create(
-            data={
-                "image": unique_filename
-            }
-        )
-        
-        # Generate AI description in the background
-        # description = await describe_image_with_ai(file_path)
-        description = "No description available"        
-        
-        # Update record with description if available
-        if description:
-            print(f"Generated description length: {len(description)}")
-            try:
-                await db.image.update(
-                    where={"id": image_record.id},
-                    data={"description": description}
-                )
-                print(f"Successfully updated description for image {image_record.id}")
-            except Exception as db_error:
-                print(f"Failed to update description for image {image_record.id}: {db_error}")
-        
+            buffer.write(await file.read())
+
+        # SAVE TO DB (SQLAlchemy raw query)
+        with engine.begin() as conn:
+            result = conn.execute(
+                text("""
+                    INSERT INTO image (image, description)
+                    VALUES (:image, :description)
+                    RETURNING id
+                """),
+                {"image": unique_filename, "description": "No description"}
+            )
+            image_id = result.fetchone()[0]
+
         return {
-              "id": image_record.id,
-                "filename": unique_filename,
-                "url": f"/uploads/{unique_filename}",
-                "description": description
-            }
-        
+            "id": image_id,
+            "filename": unique_filename,
+            "url": f"/uploads/{unique_filename}"
+        }
+
     except Exception as e:
         return {"error": str(e)}
+    
 
 @app.get("/api/images")
 async def get_all_images():
-    """Fetch all uploaded images with descriptions"""
-    images = await db.image.find_many(
-        order={"createdAt": "desc"}
-    )
+    with engine.begin() as conn:
+        result = conn.execute(text("SELECT * FROM image ORDER BY id DESC"))
+        rows = result.fetchall()
+
     return {
         "images": [
             {
-                "id": img.id,
-                "url": f"/uploads/{img.image}",
-                "description": img.description,
-                "createdAt": img.createdAt
+                "id": row.id,
+                "url": f"/uploads/{row.image}",
+                "description": row.description
             }
-            for img in images
+            for row in rows
         ]
     }
-
 @app.get("/uploads/{filename}")
 async def get_image_file(filename: str):
     file_path = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(file_path):
         return {"error": "File not found"}
     return FileResponse(file_path)
-    """Fetch a specific image by ID"""
-    try:
-        image_record = await db.image.find_unique(where={"id": image_id})
-        if not image_record or not image_record.image:
-            return {"error": "Image not found"}
+    
+    # """Fetch a specific image by ID"""
+    # try:
+    #     image_record = await db.image.find_unique(where={"id": image_id})
+    #     if not image_record or not image_record.image:
+    #         return {"error": "Image not found"}
         
-        file_path = os.path.join(UPLOAD_DIR, image_record.image)
-        if not os.path.exists(file_path):
-            return {"error": "File not found"}
+    #     file_path = os.path.join(UPLOAD_DIR, image_record.image)
+    #     if not os.path.exists(file_path):
+    #         return {"error": "File not found"}
         
-        return FileResponse(file_path)
-    except Exception as e:
-        return {"error": str(e)}
+    #     return FileResponse(file_path)
+    # except Exception as e:
+    #     return {"error": str(e)}
 
 @app.on_event("startup")
 async def startup():
