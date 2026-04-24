@@ -131,7 +131,7 @@ async def get_all_images():
         "images": [
             {
                 "id": img.id,
-                "url": f"/api/image/{img.id}",
+                "url": f"/uploads/{img.image}",
                 "description": img.description,
                 "createdAt": img.createdAt
             }
@@ -139,8 +139,12 @@ async def get_all_images():
         ]
     }
 
-@app.get("/api/image/{image_id}")
-async def get_image(image_id: int):
+@app.get("/uploads/{filename}")
+async def get_image_file(filename: str):
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        return {"error": "File not found"}
+    return FileResponse(file_path)
     """Fetch a specific image by ID"""
     try:
         image_record = await db.image.find_unique(where={"id": image_id})
@@ -159,9 +163,10 @@ async def get_image(image_id: int):
 async def startup():
     try:
         await db.connect()
-        print("DB connected")
+        print("DB CONNECTED TO NEON")
     except Exception as e:
-        print("DB connection failed:", e)
+        print("DB CONNECTION FAILED:", e)
+        raise e
 
 @app.on_event("shutdown")
 async def shutdown():
