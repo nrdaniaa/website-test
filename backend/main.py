@@ -10,11 +10,9 @@ from pydantic import BaseModel
 import base64
 import httpx
 from typing import Optional
-from sqlalchemy import create_engine
 
 
 app = FastAPI()
-engine = create_engine(os.getenv("DATABASE_URL"))
 
 # Enable CORS for frontend to backend communication
 app.add_middleware(
