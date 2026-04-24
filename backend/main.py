@@ -110,20 +110,31 @@ async def upload_image(file: UploadFile = File(...)):
 
 @app.get("/api/images")
 async def get_all_images():
-    with engine.begin() as conn:
-        result = conn.execute(text("SELECT * FROM image ORDER BY id DESC"))
-        rows = result.fetchall()
+    try:
+        with engine.begin() as conn:
+            result = conn.execute(text("""
+                SELECT id, image, description, created_at
+                FROM image
+                ORDER BY id DESC
+            """))
+            rows = result.fetchall()
 
-    return {
-        "images": [
-            {
-                "id": row.id,
-                "url": f"/uploads/{row.image}",
-                "description": row.description
-            }
-            for row in rows
-        ]
-    }
+        images = []
+        for row in rows:
+            images.append({
+                "id": row[0],
+                "url": f"/uploads/{row[1]}",
+                "description": row[2],
+                "createdAt": row[3]
+            })
+
+        return {"images": images}
+
+    except Exception as e:
+        print("API ERROR:", e)
+        return {"error": str(e)}
+    
+    
 @app.get("/uploads/{filename}")
 async def get_image_file(filename: str):
     file_path = os.path.join(UPLOAD_DIR, filename)

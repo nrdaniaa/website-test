@@ -68,7 +68,7 @@ export default function dashboard() {
           <img src="g7logo.png" alt="G7 Aerospace Logo" className="h-16 w-auto" />
         </div>
         <div>
-          <h1 className="mt-4 text-center text-2xl font-bold">Welcome to the G7 Aerospace Dashboard</h1>
+          <h1 className="mt-4 text-center text-2xl font-bold">Welcome to the Dashboard</h1>
           <h1>{message}</h1>
         </div>
       </SidebarInset>
