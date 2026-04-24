@@ -168,7 +168,7 @@ export function ImageGallery() {
 
     return (
         <div className="mt-8">
-            <h2 className="text-xl font-bold mb-4">Uploaded fImages</h2>
+            <h2 className="text-xl font-bold mb-4">Uploaded Images</h2>
 
             {images.length === 0 ? (
                 <p className="text-gray-500">No images uploaded yet.</p>
